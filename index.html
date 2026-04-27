@@ -71,31 +71,8 @@
       <div class="tile"><div class="value" id="run-pace">—</div><div class="label">Avg Pace</div></div>
     </div>
 
-    <!-- Strava Sync -->
-    <div class="card strava-card">
-      <div class="strava-header">
-        <span class="strava-badge">S</span>
-        <h2>Strava Sync</h2>
-      </div>
-      <details class="strava-help">
-        <summary>How to get your Access Token</summary>
-        <ol>
-          <li>Go to <a href="https://www.strava.com/settings/api" target="_blank" rel="noopener">strava.com/settings/api</a> and create an app (if you haven't yet).</li>
-          <li>Scroll to <strong>Your Access Token</strong> at the bottom of that page.</li>
-          <li>Copy the token and paste it below.</li>
-          <li>Tokens expire after 6 hours — come back here to refresh.</li>
-        </ol>
-      </details>
-      <div class="strava-token-row">
-        <input type="password" id="strava-token" placeholder="Paste Strava Access Token…" />
-        <button type="button" id="strava-fetch-btn">Import Runs</button>
-        <button type="button" id="strava-clear-btn">Clear</button>
-      </div>
-      <div id="strava-status" class="strava-status"></div>
-    </div>
-
     <div class="card">
-      <h2>Log a Run Manually</h2>
+      <h2>Log a Run</h2>
       <form id="run-form">
         <label>Date <input type="date" name="date" /></label>
         <label>Distance (mi) <input type="number" name="distance" min="0" step="0.01" placeholder="3.1" required /></label>
@@ -177,7 +154,7 @@
         <input type="text" id="food-search" placeholder="e.g. 'chicken breast', 'banana', 'oatmeal'…" />
         <button type="button" id="food-search-btn">Search</button>
       </div>
-      <p class="search-note">Data from USDA FoodData Central. Values shown per 100g — adjust in the form below.</p>
+      <p class="search-note">Data from USDA FoodData Central. Click a result to pre-fill the form below — adjust grams to scale macros automatically.</p>
       <div id="food-results"></div>
     </div>
 
@@ -187,6 +164,7 @@
       <form id="cal-form">
         <label>Date <input type="date" name="date" /></label>
         <label>Food <input type="text" name="food" id="cal-food-name" placeholder="Food name" required /></label>
+        <label>Grams (g) <input type="number" name="grams" id="cal-food-grams" min="1" step="1" value="100" placeholder="100" /></label>
         <label>Calories (kcal) <input type="number" name="calories" id="cal-food-cals" min="0" placeholder="kcal" required /></label>
         <label>Protein (g) <input type="number" name="protein" id="cal-food-protein" min="0" step="0.1" placeholder="0" /></label>
         <label>Carbs (g) <input type="number" name="carbs" id="cal-food-carbs" min="0" step="0.1" placeholder="0" /></label>

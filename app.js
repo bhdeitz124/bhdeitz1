@@ -171,7 +171,7 @@ if (liftFilterClear) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// RUNS — with Strava sync
+// RUNS
 // ══════════════════════════════════════════════════════════════════════════════
 const runForm   = document.getElementById('run-form');
 const runList   = document.getElementById('run-list');
@@ -211,106 +211,14 @@ function renderRuns(filterDate) {
   }
   [...runs].reverse().forEach((r) => {
     const li = document.createElement('li');
-    const stravaBadge = r.source === 'strava'
-      ? ' <span class="strava-tag">Strava</span>' : '';
     li.innerHTML = `
       <div>
-        <strong>${esc(r.distance)} mi</strong>${stravaBadge}
+        <strong>${esc(r.distance)} mi</strong>
         <span class="meta"> &mdash; ${esc(r.duration || '—')} &mdash; ${esc(r.type || 'Run')}</span>
-        ${r.name ? `<span class="meta"> &mdash; ${esc(r.name)}</span>` : ''}
         <div class="meta">${fmtDate(r.date)}</div>
       </div>
       <button class="del-btn" title="Delete" data-key="runs" data-id="${esc(r.id)}">&times;</button>`;
     runList.appendChild(li);
-  });
-}
-
-// ── Strava integration ────────────────────────────────────────────────────────
-const stravaTokenInput = document.getElementById('strava-token');
-const stravaFetchBtn   = document.getElementById('strava-fetch-btn');
-const stravaStatus     = document.getElementById('strava-status');
-const stravaTokenClear = document.getElementById('strava-clear-btn');
-
-function secsToHMS(secs) {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-function mToMi(meters) {
-  return (meters / 1609.344).toFixed(2);
-}
-
-if (stravaTokenClear) {
-  stravaTokenClear.addEventListener('click', () => {
-    if (stravaTokenInput) stravaTokenInput.value = '';
-    localStorage.removeItem('ft_strava_token');
-    if (stravaStatus) stravaStatus.innerHTML = '';
-  });
-}
-
-if (stravaFetchBtn) {
-  stravaFetchBtn.addEventListener('click', async () => {
-    const token = stravaTokenInput ? stravaTokenInput.value.trim() : '';
-    if (!token) {
-      if (stravaStatus) stravaStatus.innerHTML =
-        '<span class="strava-error">Please enter a Strava Access Token.</span>';
-      return;
-    }
-    // Persist token for convenience
-    localStorage.setItem('ft_strava_token', token);
-    if (stravaStatus) stravaStatus.innerHTML = '<span class="strava-info">Fetching activities…</span>';
-    stravaFetchBtn.disabled = true;
-
-    try {
-      const resp = await fetch(
-        'https://www.strava.com/api/v3/athlete/activities?per_page=30&page=1',
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.message || `HTTP ${resp.status}`);
-      }
-      const activities = await resp.json();
-      const stravaRuns = activities.filter((a) => a.type === 'Run');
-
-      const existing = store.get(KEYS.runs);
-      const existingStravaIds = new Set(
-        existing.filter((r) => r.stravaId).map((r) => r.stravaId)
-      );
-
-      const newRuns = stravaRuns
-        .filter((a) => !existingStravaIds.has(String(a.id)))
-        .map((a) => ({
-          id:       uid(),
-          stravaId: String(a.id),
-          source:   'strava',
-          date:     a.start_date_local.slice(0, 10),
-          name:     a.name,
-          distance: mToMi(a.distance),
-          duration: secsToHMS(a.moving_time),
-          type:     'Run',
-        }));
-
-      if (newRuns.length === 0) {
-        if (stravaStatus) stravaStatus.innerHTML =
-          '<span class="strava-info">No new runs to import (all already synced).</span>';
-      } else {
-        store.set(KEYS.runs, [...existing, ...newRuns]);
-        renderRuns(runFilter ? runFilter.value || null : null);
-        if (stravaStatus) stravaStatus.innerHTML =
-          `<span class="strava-ok">&#10003; Imported ${newRuns.length} run${newRuns.length > 1 ? 's' : ''}!</span>`;
-      }
-    } catch (err) {
-      let msg = esc(err.message);
-      if (err instanceof TypeError) {
-        msg = 'Could not reach Strava. If opening as a local file, try hosting on GitHub Pages or a web server.';
-      }
-      if (stravaStatus) stravaStatus.innerHTML = `<span class="strava-error">Error: ${msg}</span>`;
-    } finally {
-      stravaFetchBtn.disabled = false;
-    }
   });
 }
 
@@ -429,10 +337,11 @@ function renderCalories(filterDate) {
       Number(c.carbs)   ? `C:${Number(c.carbs).toFixed(0)}g`   : null,
       Number(c.fat)     ? `F:${Number(c.fat).toFixed(0)}g`     : null,
     ].filter(Boolean).join(' · ');
+    const gramsLabel = c.grams ? ` (${Number(c.grams)}g)` : '';
     const li = document.createElement('li');
     li.innerHTML = `
       <div>
-        <strong>${esc(c.food)}</strong>
+        <strong>${esc(c.food)}</strong>${esc(gramsLabel)}
         <span class="meta"> &mdash; ${esc(c.calories)} kcal${macroParts ? ' &mdash; ' + esc(macroParts) : ''}</span>
         <div class="meta">${fmtDate(c.date)}</div>
       </div>
@@ -463,17 +372,37 @@ const foodSearch     = document.getElementById('food-search');
 const foodSearchBtn  = document.getElementById('food-search-btn');
 const foodResults    = document.getElementById('food-results');
 const calFoodName    = document.getElementById('cal-food-name');
+const calFoodGrams   = document.getElementById('cal-food-grams');
 const calFoodCals    = document.getElementById('cal-food-cals');
 const calFoodProtein = document.getElementById('cal-food-protein');
 const calFoodCarbs   = document.getElementById('cal-food-carbs');
 const calFoodFat     = document.getElementById('cal-food-fat');
 
+// Per-100g base values for the currently selected food (null when no food selected)
+let per100g = null;
+
+function applyGrams(grams) {
+  if (!per100g) return;
+  const factor = grams / 100;
+  if (calFoodCals)    calFoodCals.value    = Math.round(per100g.kcal    * factor);
+  if (calFoodProtein) calFoodProtein.value = (per100g.protein * factor).toFixed(1);
+  if (calFoodCarbs)   calFoodCarbs.value   = (per100g.carbs   * factor).toFixed(1);
+  if (calFoodFat)     calFoodFat.value     = (per100g.fat     * factor).toFixed(1);
+}
+
+if (calFoodGrams) {
+  calFoodGrams.addEventListener('input', () => {
+    const g = parseFloat(calFoodGrams.value);
+    if (g > 0) applyGrams(g);
+  });
+}
+
 function fillFoodForm(name, kcal, protein, carbs, fat) {
-  if (calFoodName)    calFoodName.value    = name;
-  if (calFoodCals)    calFoodCals.value    = Math.round(kcal);
-  if (calFoodProtein) calFoodProtein.value = protein.toFixed(1);
-  if (calFoodCarbs)   calFoodCarbs.value   = carbs.toFixed(1);
-  if (calFoodFat)     calFoodFat.value     = fat.toFixed(1);
+  per100g = { kcal, protein, carbs, fat };
+  if (calFoodName) calFoodName.value = name;
+  // Default to 100g
+  if (calFoodGrams) calFoodGrams.value = 100;
+  applyGrams(100);
   // Highlight selected result and scroll to the add-to-log form
   document.querySelectorAll('.food-result-item').forEach((el) => el.classList.remove('selected'));
   const addCard = document.getElementById('food-add-card');
@@ -545,6 +474,7 @@ if (calForm) {
       id:       uid(),
       date:     fd.get('date') || todayISO(),
       food:     (fd.get('food') || '').trim(),
+      grams:    Number(fd.get('grams'))    || 100,
       calories: Number(fd.get('calories')) || 0,
       protein:  Number(fd.get('protein'))  || 0,
       carbs:    Number(fd.get('carbs'))    || 0,
@@ -554,9 +484,11 @@ if (calForm) {
     const all = store.get(KEYS.calories);
     all.push(entry);
     store.set(KEYS.calories, all);
+    per100g = null;
     calForm.reset();
     const dateField = calForm.querySelector('[name=date]');
     if (dateField) dateField.value = todayISO();
+    if (calFoodGrams) calFoodGrams.value = 100;
     renderCalories(calFilter ? calFilter.value || null : null);
   });
 }
@@ -598,10 +530,6 @@ document.addEventListener('click', (e) => {
   if (proteinGoalInput && goals.protein)  proteinGoalInput.value = goals.protein;
   if (carbsGoalInput   && goals.carbs)    carbsGoalInput.value   = goals.carbs;
   if (fatGoalInput     && goals.fat)      fatGoalInput.value     = goals.fat;
-
-  // Restore saved Strava token
-  const savedToken = localStorage.getItem('ft_strava_token');
-  if (savedToken && stravaTokenInput) stravaTokenInput.value = savedToken;
 
   // Start workout builder with one blank exercise row
   addExerciseRow(null);
