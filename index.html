@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fitness Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <h1>🏋️ Fitness Tracker</h1>
+  <p>Track your lifts, runs, and calories — all in one place</p>
+</header>
+
+<nav>
+  <button class="active" data-tab="lifts-panel">💪 Lifts</button>
+  <button data-tab="runs-panel">🏃 Runs</button>
+  <button data-tab="calories-panel">🥗 Calories</button>
+</nav>
+
+<main>
+
+  <!-- ══ LIFTS ══════════════════════════════════════════════ -->
+  <section id="lifts-panel" class="tab-panel active">
+
+    <div class="summary">
+      <div class="tile"><div class="value" id="lift-total">0</div><div class="label">Total Entries</div></div>
+      <div class="tile"><div class="value" id="lift-sets">0</div><div class="label">Total Sets</div></div>
+      <div class="tile"><div class="value" id="lift-vol">0 lbs</div><div class="label">Total Volume</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Log a Lift</h2>
+      <form id="lift-form">
+        <label>Date <input type="date" name="date" /></label>
+        <label>Exercise <input type="text" name="exercise" placeholder="e.g. Squat" required /></label>
+        <label>Sets <input type="number" name="sets" min="1" value="3" required /></label>
+        <label>Reps <input type="number" name="reps" min="1" value="8" required /></label>
+        <label>Weight (lbs) <input type="number" name="weight" min="0" step="2.5" value="135" required /></label>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Lift History</h2>
+      <div class="filter-row">
+        <label>Filter by date</label>
+        <input type="date" id="lift-filter-date" />
+        <button id="lift-filter-clear">Clear</button>
+      </div>
+      <ul class="log-list" id="lift-list"></ul>
+    </div>
+
+  </section>
+
+  <!-- ══ RUNS ═══════════════════════════════════════════════ -->
+  <section id="runs-panel" class="tab-panel">
+
+    <div class="summary">
+      <div class="tile"><div class="value" id="run-total">0</div><div class="label">Total Runs</div></div>
+      <div class="tile"><div class="value" id="run-dist">0.00 mi</div><div class="label">Total Distance</div></div>
+      <div class="tile"><div class="value" id="run-pace">—</div><div class="label">Avg Pace</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Log a Run</h2>
+      <form id="run-form">
+        <label>Date <input type="date" name="date" /></label>
+        <label>Distance (mi) <input type="number" name="distance" min="0" step="0.01" placeholder="3.1" required /></label>
+        <label>Duration (h:mm:ss) <input type="text" name="duration" placeholder="0:30:00" /></label>
+        <label>Type
+          <select name="type">
+            <option value="Easy">Easy</option>
+            <option value="Tempo">Tempo</option>
+            <option value="Intervals">Intervals</option>
+            <option value="Long Run">Long Run</option>
+            <option value="Race">Race</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Run History</h2>
+      <div class="filter-row">
+        <label>Filter by date</label>
+        <input type="date" id="run-filter-date" />
+        <button id="run-filter-clear">Clear</button>
+      </div>
+      <ul class="log-list" id="run-list"></ul>
+    </div>
+
+  </section>
+
+  <!-- ══ CALORIES ════════════════════════════════════════════ -->
+  <section id="calories-panel" class="tab-panel">
+
+    <div class="card">
+      <h2>Daily Goal</h2>
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+        <label style="font-size:.85rem;font-weight:600;color:#555;">
+          Daily target (kcal)
+          <input id="cal-goal" type="number" min="500" step="50" value="2000"
+                 style="width:110px;margin-top:.3rem;padding:.45rem .65rem;border:1.5px solid #dde1e7;border-radius:8px;font-size:.9rem;" />
+        </label>
+        <div style="flex:1;min-width:200px;">
+          <div style="display:flex;justify-content:space-between;font-size:.8rem;color:#888;margin-bottom:.2rem;">
+            <span>Consumed: <strong id="cal-total">0</strong> kcal</span>
+            <span>Goal: <strong id="cal-goal-disp">2000</strong> kcal</span>
+          </div>
+          <div class="prog-wrap"><div class="prog-bar ok" id="cal-prog" style="width:0%"></div></div>
+          <div style="font-size:.8rem;color:#888;">Remaining: <strong id="cal-remain">2000</strong> kcal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Log Food</h2>
+      <form id="cal-form">
+        <label>Date <input type="date" name="date" /></label>
+        <label>Food / Meal <input type="text" name="food" placeholder="e.g. Chicken breast" required /></label>
+        <label>Calories (kcal) <input type="number" name="calories" min="0" placeholder="350" required /></label>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Food Log</h2>
+      <div class="filter-row">
+        <label>Filter by date</label>
+        <input type="date" id="cal-filter-date" />
+        <button id="cal-filter-clear">Clear</button>
+      </div>
+      <ul class="log-list" id="cal-list"></ul>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Script is placed at end of body so all DOM elements are available when it runs -->
+<script src="app.js"></script>
+</body>
+</html>
