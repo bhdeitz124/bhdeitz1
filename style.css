@@ -148,15 +148,388 @@ form button[type=submit]:hover { background: #c73652; }
 }
 .filter-row button:hover { border-color: #e94560; color: #e94560; }
 
-/* ── Progress bar (calories) ─────────────────────────────── */
-.prog-wrap { background: #f0f2f5; border-radius: 99px; height: 10px; margin: .5rem 0 .25rem; overflow: hidden; }
+/* ── Progress bars ───────────────────────────────────────── */
+.prog-wrap { background: #f0f2f5; border-radius: 99px; height: 10px; margin: .35rem 0 .25rem; overflow: hidden; flex: 1; min-width: 80px; }
 .prog-bar { height: 100%; border-radius: 99px; background: #e94560; transition: width .4s; }
 .prog-bar.ok { background: #2ecc71; }
 .prog-bar.warn { background: #f39c12; }
+.prog-bar.protein-bar { background: #3498db; }
+.prog-bar.carbs-bar   { background: #9b59b6; }
+.prog-bar.fat-bar     { background: #f39c12; }
+
+/* ── Workout builder (Lifts) ─────────────────────────────── */
+.workout-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin-bottom: 1rem;
+}
+.workout-meta label {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #555;
+  flex: 1 1 180px;
+}
+.workout-meta input {
+  padding: .55rem .75rem;
+  border: 1.5px solid #dde1e7;
+  border-radius: 8px;
+  font-size: .9rem;
+  transition: border-color .2s;
+  width: 100%;
+}
+.workout-meta input:focus { outline: none; border-color: #e94560; }
+
+.exercise-builder-header {
+  display: flex;
+  gap: .4rem;
+  padding: .25rem 0;
+  border-bottom: 1.5px solid #f0f2f5;
+  margin-bottom: .25rem;
+}
+.exercise-builder-header span {
+  font-size: .72rem;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.exercise-builder-header span:nth-child(1) { flex: 2 1 160px; }
+.exercise-builder-header span:nth-child(2),
+.exercise-builder-header span:nth-child(3),
+.exercise-builder-header span:nth-child(4) { flex: 1 1 65px; }
+.exercise-builder-header span:nth-child(5) { width: 2rem; flex-shrink: 0; }
+
+.exercise-row {
+  display: flex;
+  gap: .4rem;
+  align-items: center;
+  padding: .35rem 0;
+  border-bottom: 1px solid #f8f8f8;
+}
+.exercise-row .ex-name   { flex: 2 1 160px; }
+.exercise-row .ex-sets,
+.exercise-row .ex-reps,
+.exercise-row .ex-weight { flex: 1 1 65px; min-width: 0; }
+.exercise-row input {
+  padding: .45rem .6rem;
+  border: 1.5px solid #dde1e7;
+  border-radius: 8px;
+  font-size: .88rem;
+  width: 100%;
+  transition: border-color .2s;
+}
+.exercise-row input:focus { outline: none; border-color: #e94560; }
+.rm-ex-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 1.1rem;
+  padding: .2rem .35rem;
+  border-radius: 4px;
+  transition: color .2s;
+  flex-shrink: 0;
+  width: 2rem;
+  text-align: center;
+}
+.rm-ex-btn:hover { color: #e94560; }
+
+.workout-actions {
+  display: flex;
+  gap: .65rem;
+  margin-top: .85rem;
+  flex-wrap: wrap;
+}
+.btn-secondary, .btn-primary {
+  padding: .55rem 1.2rem;
+  border-radius: 8px;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background .2s;
+}
+.btn-secondary {
+  background: #f0f2f5;
+  color: #444;
+  border: 1.5px solid #dde1e7;
+}
+.btn-secondary:hover { background: #e0e3e8; }
+.btn-primary {
+  background: #e94560;
+  color: #fff;
+}
+.btn-primary:hover { background: #c73652; }
+
+/* ── Workout history cards ───────────────────────────────── */
+.workout-card {
+  background: #fafbfc;
+  border: 1px solid #eaecef;
+  border-radius: 10px;
+  padding: .9rem 1rem;
+  margin-bottom: .85rem;
+}
+.workout-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: .6rem;
+  gap: .5rem;
+}
+.workout-card-header strong { font-size: .95rem; color: #1a1a2e; }
+.workout-card-header .meta { display: block; font-size: .78rem; color: #888; margin-top: .15rem; }
+.workout-card .del-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: .1rem .3rem;
+  border-radius: 4px;
+  transition: color .2s;
+  flex-shrink: 0;
+}
+.workout-card .del-btn:hover { color: #e94560; }
+
+.exercise-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .84rem;
+}
+.exercise-table th {
+  text-align: left;
+  font-size: .72rem;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: .25rem .4rem;
+  border-bottom: 1px solid #f0f2f5;
+}
+.exercise-table td {
+  padding: .3rem .4rem;
+  border-bottom: 1px solid #f8f8f8;
+  color: #333;
+}
+.exercise-table tr:last-child td { border-bottom: none; }
+
+/* ── Strava card ─────────────────────────────────────────── */
+.strava-card { border-left: 4px solid #fc4c02; }
+.strava-header {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .65rem;
+}
+.strava-badge {
+  background: #fc4c02;
+  color: #fff;
+  font-weight: 900;
+  font-size: 1rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.strava-header h2 { margin-bottom: 0; }
+
+.strava-help {
+  font-size: .82rem;
+  color: #555;
+  margin-bottom: .75rem;
+  background: #fafbfc;
+  border-radius: 8px;
+  padding: .5rem .75rem;
+}
+.strava-help summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #0f3460;
+  padding: .15rem 0;
+}
+.strava-help ol {
+  margin: .5rem 0 0 1.2rem;
+  line-height: 1.7;
+}
+.strava-help a { color: #fc4c02; }
+
+.strava-token-row {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .5rem;
+}
+.strava-token-row input {
+  flex: 1 1 220px;
+  padding: .55rem .75rem;
+  border: 1.5px solid #dde1e7;
+  border-radius: 8px;
+  font-size: .9rem;
+}
+.strava-token-row input:focus { outline: none; border-color: #fc4c02; }
+.strava-token-row button {
+  padding: .55rem 1rem;
+  border-radius: 8px;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background .2s;
+}
+#strava-fetch-btn { background: #fc4c02; color: #fff; }
+#strava-fetch-btn:hover { background: #d93e00; }
+#strava-fetch-btn:disabled { background: #ccc; cursor: default; }
+#strava-clear-btn { background: #f0f2f5; color: #555; border: 1.5px solid #dde1e7; }
+#strava-clear-btn:hover { background: #e0e3e8; }
+
+.strava-status { font-size: .85rem; min-height: 1.4rem; }
+.strava-error  { color: #e94560; }
+.strava-info   { color: #888; }
+.strava-ok     { color: #2ecc71; font-weight: 600; }
+.strava-note   { font-size: .82rem; color: #888; margin-bottom: .75rem; line-height: 1.5; }
+.strava-note a { color: #fc4c02; }
+.strava-tag {
+  display: inline-block;
+  background: #fc4c02;
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: .05rem .35rem;
+  vertical-align: middle;
+  margin-left: .25rem;
+}
+
+/* ── Macro goals & progress (Calories) ──────────────────── */
+.macro-goals-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin-bottom: 1.1rem;
+}
+.macro-goals-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #555;
+  flex: 1 1 100px;
+}
+.macro-goals-inputs input {
+  padding: .5rem .65rem;
+  border: 1.5px solid #dde1e7;
+  border-radius: 8px;
+  font-size: .9rem;
+  width: 100%;
+  transition: border-color .2s;
+}
+.macro-goals-inputs input:focus { outline: none; border-color: #e94560; }
+
+.macro-progress { display: flex; flex-direction: column; gap: .6rem; }
+.macro-row {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  flex-wrap: wrap;
+}
+.macro-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: #555;
+  width: 70px;
+  flex-shrink: 0;
+}
+.macro-vals {
+  font-size: .8rem;
+  color: #888;
+  white-space: nowrap;
+  min-width: 130px;
+}
+.macro-vals strong { color: #1a1a2e; }
+
+/* ── Food search ─────────────────────────────────────────── */
+.search-row {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: .6rem;
+}
+.search-row input {
+  flex: 1;
+  padding: .55rem .75rem;
+  border: 1.5px solid #dde1e7;
+  border-radius: 8px;
+  font-size: .9rem;
+  transition: border-color .2s;
+}
+.search-row input:focus { outline: none; border-color: #e94560; }
+.search-row button {
+  background: #e94560;
+  color: #fff;
+  border: none;
+  padding: .55rem 1.1rem;
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s;
+}
+.search-row button:hover { background: #c73652; }
+
+.search-note {
+  font-size: .78rem;
+  color: #aaa;
+  margin-bottom: .6rem;
+}
+
+.food-result-list {
+  list-style: none;
+  border: 1px solid #eaecef;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: .5rem;
+}
+.food-result-item {
+  padding: .6rem .85rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f2f5;
+  transition: background .15s;
+}
+.food-result-item:last-child { border-bottom: none; }
+.food-result-item:hover { background: #f5f7fa; }
+.food-result-item.selected { background: #eaf6ee; }
+.food-result-name {
+  font-size: .88rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: .15rem;
+}
+.food-result-macros {
+  font-size: .78rem;
+  color: #888;
+}
+.food-result-note {
+  font-size: .72rem;
+  color: #bbb;
+  margin-left: .35rem;
+}
+.search-loading { font-size: .85rem; color: #888; padding: .5rem 0; }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 480px) {
   header h1 { font-size: 1.3rem; }
   nav button { font-size: .8rem; padding: .75rem .35rem; }
   .tile .value { font-size: 1.3rem; }
+  .exercise-builder-header { display: none; }
+  .macro-label { width: 55px; }
+  .macro-vals { min-width: 100px; font-size: .75rem; }
 }

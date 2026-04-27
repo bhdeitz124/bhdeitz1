@@ -25,31 +25,39 @@
   <section id="lifts-panel" class="tab-panel active">
 
     <div class="summary">
-      <div class="tile"><div class="value" id="lift-total">0</div><div class="label">Total Entries</div></div>
+      <div class="tile"><div class="value" id="lift-total">0</div><div class="label">Workouts</div></div>
       <div class="tile"><div class="value" id="lift-sets">0</div><div class="label">Total Sets</div></div>
       <div class="tile"><div class="value" id="lift-vol">0 lbs</div><div class="label">Total Volume</div></div>
     </div>
 
     <div class="card">
-      <h2>Log a Lift</h2>
-      <form id="lift-form">
-        <label>Date <input type="date" name="date" /></label>
-        <label>Exercise <input type="text" name="exercise" placeholder="e.g. Squat" required /></label>
-        <label>Sets <input type="number" name="sets" min="1" value="3" required /></label>
-        <label>Reps <input type="number" name="reps" min="1" value="8" required /></label>
-        <label>Weight (lbs) <input type="number" name="weight" min="0" step="2.5" value="135" required /></label>
-        <button type="submit">Add</button>
-      </form>
+      <h2>Log a Workout</h2>
+      <div class="workout-meta">
+        <label>Workout Name
+          <input type="text" id="workout-name" placeholder="e.g. Back/Bicep Day" />
+        </label>
+        <label>Date
+          <input type="date" id="workout-date" />
+        </label>
+      </div>
+      <div class="exercise-builder-header">
+        <span>Exercise</span><span>Sets</span><span>Reps</span><span>Weight (lbs)</span><span></span>
+      </div>
+      <div id="exercise-builder"></div>
+      <div class="workout-actions">
+        <button type="button" id="add-exercise-btn" class="btn-secondary">+ Add Exercise</button>
+        <button type="button" id="save-workout-btn" class="btn-primary">Save Workout</button>
+      </div>
     </div>
 
     <div class="card">
-      <h2>Lift History</h2>
+      <h2>Workout History</h2>
       <div class="filter-row">
         <label>Filter by date</label>
         <input type="date" id="lift-filter-date" />
         <button id="lift-filter-clear">Clear</button>
       </div>
-      <ul class="log-list" id="lift-list"></ul>
+      <div id="lift-list"></div>
     </div>
 
   </section>
@@ -63,8 +71,31 @@
       <div class="tile"><div class="value" id="run-pace">—</div><div class="label">Avg Pace</div></div>
     </div>
 
+    <!-- Strava Sync -->
+    <div class="card strava-card">
+      <div class="strava-header">
+        <span class="strava-badge">S</span>
+        <h2>Strava Sync</h2>
+      </div>
+      <details class="strava-help">
+        <summary>How to get your Access Token</summary>
+        <ol>
+          <li>Go to <a href="https://www.strava.com/settings/api" target="_blank" rel="noopener">strava.com/settings/api</a> and create an app (if you haven't yet).</li>
+          <li>Scroll to <strong>Your Access Token</strong> at the bottom of that page.</li>
+          <li>Copy the token and paste it below.</li>
+          <li>Tokens expire after 6 hours — come back here to refresh.</li>
+        </ol>
+      </details>
+      <div class="strava-token-row">
+        <input type="password" id="strava-token" placeholder="Paste Strava Access Token…" />
+        <button type="button" id="strava-fetch-btn">Import Runs</button>
+        <button type="button" id="strava-clear-btn">Clear</button>
+      </div>
+      <div id="strava-status" class="strava-status"></div>
+    </div>
+
     <div class="card">
-      <h2>Log a Run</h2>
+      <h2>Log a Run Manually</h2>
       <form id="run-form">
         <label>Date <input type="date" name="date" /></label>
         <label>Distance (mi) <input type="number" name="distance" min="0" step="0.01" placeholder="3.1" required /></label>
@@ -98,35 +129,73 @@
   <!-- ══ CALORIES ════════════════════════════════════════════ -->
   <section id="calories-panel" class="tab-panel">
 
+    <!-- Daily Goals + Macro Progress -->
     <div class="card">
-      <h2>Daily Goal</h2>
-      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
-        <label style="font-size:.85rem;font-weight:600;color:#555;">
-          Daily target (kcal)
-          <input id="cal-goal" type="number" min="500" step="50" value="2000"
-                 style="width:110px;margin-top:.3rem;padding:.45rem .65rem;border:1.5px solid #dde1e7;border-radius:8px;font-size:.9rem;" />
+      <h2>Daily Goals &amp; Progress</h2>
+      <div class="macro-goals-inputs">
+        <label>Calories (kcal)
+          <input id="cal-goal" type="number" min="500" step="50" value="2000" />
         </label>
-        <div style="flex:1;min-width:200px;">
-          <div style="display:flex;justify-content:space-between;font-size:.8rem;color:#888;margin-bottom:.2rem;">
-            <span>Consumed: <strong id="cal-total">0</strong> kcal</span>
-            <span>Goal: <strong id="cal-goal-disp">2000</strong> kcal</span>
-          </div>
+        <label>Protein (g)
+          <input id="macro-protein-goal" type="number" min="0" step="5" value="150" />
+        </label>
+        <label>Carbs (g)
+          <input id="macro-carbs-goal" type="number" min="0" step="5" value="200" />
+        </label>
+        <label>Fat (g)
+          <input id="macro-fat-goal" type="number" min="0" step="5" value="65" />
+        </label>
+      </div>
+      <div class="macro-progress">
+        <div class="macro-row">
+          <span class="macro-label">Calories</span>
           <div class="prog-wrap"><div class="prog-bar ok" id="cal-prog" style="width:0%"></div></div>
-          <div style="font-size:.8rem;color:#888;">Remaining: <strong id="cal-remain">2000</strong> kcal</div>
+          <span class="macro-vals"><strong id="cal-total">0</strong> / <span id="cal-goal-disp">2000</span> kcal &bull; <strong id="cal-remain">2000</strong> left</span>
+        </div>
+        <div class="macro-row">
+          <span class="macro-label">Protein</span>
+          <div class="prog-wrap"><div class="prog-bar protein-bar" id="protein-prog" style="width:0%"></div></div>
+          <span class="macro-vals"><strong id="protein-total">0</strong>g / <span id="protein-goal-disp">150</span>g</span>
+        </div>
+        <div class="macro-row">
+          <span class="macro-label">Carbs</span>
+          <div class="prog-wrap"><div class="prog-bar carbs-bar" id="carbs-prog" style="width:0%"></div></div>
+          <span class="macro-vals"><strong id="carbs-total">0</strong>g / <span id="carbs-goal-disp">200</span>g</span>
+        </div>
+        <div class="macro-row">
+          <span class="macro-label">Fat</span>
+          <div class="prog-wrap"><div class="prog-bar fat-bar" id="fat-prog" style="width:0%"></div></div>
+          <span class="macro-vals"><strong id="fat-total">0</strong>g / <span id="fat-goal-disp">65</span>g</span>
         </div>
       </div>
     </div>
 
+    <!-- Food Search -->
     <div class="card">
-      <h2>Log Food</h2>
+      <h2>Search Food</h2>
+      <div class="search-row">
+        <input type="text" id="food-search" placeholder="e.g. 'chicken breast', 'banana', 'oatmeal'…" />
+        <button type="button" id="food-search-btn">Search</button>
+      </div>
+      <p class="search-note">Data from USDA FoodData Central. Values shown per 100g — adjust in the form below.</p>
+      <div id="food-results"></div>
+    </div>
+
+    <!-- Add to Log -->
+    <div class="card" id="food-add-card">
+      <h2>Add to Log</h2>
       <form id="cal-form">
         <label>Date <input type="date" name="date" /></label>
-        <label>Food / Meal <input type="text" name="food" placeholder="e.g. Chicken breast" required /></label>
-        <label>Calories (kcal) <input type="number" name="calories" min="0" placeholder="350" required /></label>
-        <button type="submit">Add</button>
+        <label>Food <input type="text" name="food" id="cal-food-name" placeholder="Food name" required /></label>
+        <label>Calories (kcal) <input type="number" name="calories" id="cal-food-cals" min="0" placeholder="kcal" required /></label>
+        <label>Protein (g) <input type="number" name="protein" id="cal-food-protein" min="0" step="0.1" placeholder="0" /></label>
+        <label>Carbs (g) <input type="number" name="carbs" id="cal-food-carbs" min="0" step="0.1" placeholder="0" /></label>
+        <label>Fat (g) <input type="number" name="fat" id="cal-food-fat" min="0" step="0.1" placeholder="0" /></label>
+        <button type="submit">Add to Log</button>
       </form>
     </div>
 
+    <!-- Food Log -->
     <div class="card">
       <h2>Food Log</h2>
       <div class="filter-row">
