@@ -20,6 +20,28 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+function round1(n) { return Math.round(n * 10) / 10; }
+
+// Escape HTML to prevent XSS when inserting values into innerHTML
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Compute totals from grams served and per-100g nutritional values
+function computeMacros(grams, cal100, pro100, carb100, fat100) {
+  const factor = (Number(grams) || 0) / 100;
+  return {
+    calories: Math.round((Number(cal100)  || 0) * factor),
+    protein:  round1((Number(pro100)  || 0) * factor),
+    carbs:    round1((Number(carb100) || 0) * factor),
+    fat:      round1((Number(fat100)  || 0) * factor),
+  };
+}
+
 // ── Tab switching ─────────────────────────────────────────────────────────────
 document.querySelectorAll('nav button[data-tab]').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -33,15 +55,14 @@ document.querySelectorAll('nav button[data-tab]').forEach((btn) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // LIFTS
 // ══════════════════════════════════════════════════════════════════════════════
-const liftForm  = document.getElementById('lift-form');
-const liftList  = document.getElementById('lift-list');
+const liftForm   = document.getElementById('lift-form');
+const liftList   = document.getElementById('lift-list');
 const liftFilter = document.getElementById('lift-filter-date');
 
 function renderLifts(filterDate) {
   let lifts = store.get(KEYS.lifts);
   if (filterDate) lifts = lifts.filter((l) => l.date === filterDate);
 
-  // summary
   document.getElementById('lift-total').textContent = lifts.length;
   const sets = lifts.reduce((s, l) => s + Number(l.sets), 0);
   document.getElementById('lift-sets').textContent = sets;
@@ -53,16 +74,15 @@ function renderLifts(filterDate) {
     liftList.innerHTML = '<li class="empty">No lifts logged yet.</li>';
     return;
   }
-  // most-recent first
   [...lifts].reverse().forEach((l) => {
     const li = document.createElement('li');
     li.innerHTML = `
       <div>
-        <strong>${l.exercise}</strong>
-        <span class="meta"> &mdash; ${l.sets} sets × ${l.reps} reps @ ${l.weight} lbs</span>
+        <strong>${esc(l.exercise)}</strong>
+        <span class="meta"> &mdash; ${esc(l.sets)} sets × ${esc(l.reps)} reps @ ${esc(l.weight)} lbs</span>
         <div class="meta">${fmtDate(l.date)}</div>
       </div>
-      <button class="del-btn" title="Delete" data-key="lifts" data-id="${l.id}">✕</button>`;
+      <button class="del-btn" title="Delete" data-key="lifts" data-id="${esc(l.id)}">✕</button>`;
     liftList.appendChild(li);
   });
 }
@@ -104,11 +124,9 @@ function renderRuns(filterDate) {
   let runs = store.get(KEYS.runs);
   if (filterDate) runs = runs.filter((r) => r.date === filterDate);
 
-  // summary
   document.getElementById('run-total').textContent = runs.length;
   const dist = runs.reduce((s, r) => s + Number(r.distance), 0);
   document.getElementById('run-dist').textContent = dist.toFixed(2) + ' mi';
-  // average pace  (min/mi)
   const withPace = runs.filter((r) => r.duration && r.distance > 0);
   let avgPace = '—';
   if (withPace.length) {
@@ -133,11 +151,11 @@ function renderRuns(filterDate) {
     const li = document.createElement('li');
     li.innerHTML = `
       <div>
-        <strong>${r.distance} mi</strong>
-        <span class="meta"> &mdash; ${r.duration || '—'} &mdash; ${r.type || 'Run'}</span>
+        <strong>${esc(r.distance)} mi</strong>
+        <span class="meta"> &mdash; ${esc(r.duration || '—')} &mdash; ${esc(r.type || 'Run')}</span>
         <div class="meta">${fmtDate(r.date)}</div>
       </div>
-      <button class="del-btn" title="Delete" data-key="runs" data-id="${r.id}">✕</button>`;
+      <button class="del-btn" title="Delete" data-key="runs" data-id="${esc(r.id)}">✕</button>`;
     runList.appendChild(li);
   });
 }
@@ -169,31 +187,63 @@ document.getElementById('run-filter-clear').addEventListener('click', () => {
 // ══════════════════════════════════════════════════════════════════════════════
 // CALORIES
 // ══════════════════════════════════════════════════════════════════════════════
-const calForm    = document.getElementById('cal-form');
-const calList    = document.getElementById('cal-list');
-const calFilter  = document.getElementById('cal-filter-date');
-const goalInput  = document.getElementById('cal-goal');
+const calForm   = document.getElementById('cal-form');
+const calList   = document.getElementById('cal-list');
+const calFilter = document.getElementById('cal-filter-date');
+const goalInput = document.getElementById('cal-goal');
 
+// ── Live macro preview ────────────────────────────────────────────────────────
+function updateCalPreview() {
+  const grams   = document.getElementById('cal-grams').value;
+  const cal100  = document.getElementById('cal-per100').value;
+  const pro100  = document.getElementById('protein-per100').value;
+  const carb100 = document.getElementById('carbs-per100').value;
+  const fat100  = document.getElementById('fat-per100').value;
+
+  const preview = document.getElementById('cal-preview');
+  if (!grams) { preview.style.display = 'none'; return; }
+
+  const m = computeMacros(grams, cal100, pro100, carb100, fat100);
+  document.getElementById('prev-kcal').textContent    = m.calories + ' kcal';
+  document.getElementById('prev-protein').textContent = m.protein + 'g';
+  document.getElementById('prev-carbs').textContent   = m.carbs + 'g';
+  document.getElementById('prev-fat').textContent     = m.fat + 'g';
+  preview.style.display = 'flex';
+}
+
+['cal-grams', 'cal-per100', 'protein-per100', 'carbs-per100', 'fat-per100'].forEach((id) => {
+  document.getElementById(id).addEventListener('input', updateCalPreview);
+});
+
+// ── Render calories ───────────────────────────────────────────────────────────
 function renderCalories(filterDate) {
-  const date = filterDate || todayISO();
-  let all = store.get(KEYS.calories);
+  const date       = filterDate || todayISO();
+  const all        = store.get(KEYS.calories);
   const dayEntries = all.filter((c) => c.date === date);
-  const total = dayEntries.reduce((s, c) => s + Number(c.calories), 0);
-  const goal  = Number(localStorage.getItem(KEYS.goal) || 2000);
+  const goal       = Number(localStorage.getItem(KEYS.goal) || 2000);
 
-  document.getElementById('cal-total').textContent = total;
+  const total   = dayEntries.reduce((s, c) => s + Number(c.calories || 0), 0);
+  const protein = dayEntries.reduce((s, c) => s + Number(c.protein  || 0), 0);
+  const carbs   = dayEntries.reduce((s, c) => s + Number(c.carbs    || 0), 0);
+  const fat     = dayEntries.reduce((s, c) => s + Number(c.fat      || 0), 0);
+
+  // summary tiles
+  document.getElementById('cal-today-total').textContent = total;
+  document.getElementById('macro-protein').textContent   = round1(protein) + 'g';
+  document.getElementById('macro-carbs').textContent     = round1(carbs) + 'g';
+  document.getElementById('macro-fat').textContent       = round1(fat) + 'g';
+
+  // progress bar card
+  document.getElementById('cal-total').textContent    = total;
   document.getElementById('cal-goal-disp').textContent = goal;
-  document.getElementById('cal-remain').textContent = Math.max(0, goal - total);
-
-  // progress bar
+  document.getElementById('cal-remain').textContent   = Math.max(0, goal - total);
   const pct = Math.min(100, (total / goal) * 100);
   const bar = document.getElementById('cal-prog');
   bar.style.width = pct + '%';
   bar.className = 'prog-bar' + (pct >= 100 ? '' : pct >= 80 ? ' warn' : ' ok');
 
-  // list all entries for selected date
-  let display = filterDate ? all.filter((c) => c.date === filterDate) : dayEntries;
-
+  // food log list
+  const display = filterDate ? all.filter((c) => c.date === filterDate) : dayEntries;
   calList.innerHTML = '';
   if (display.length === 0) {
     calList.innerHTML = '<li class="empty">No entries for this day.</li>';
@@ -201,32 +251,58 @@ function renderCalories(filterDate) {
   }
   [...display].reverse().forEach((c) => {
     const li = document.createElement('li');
+    const hasMacros = c.protein || c.carbs || c.fat;
+    const macroStr  = hasMacros
+      ? `<span class="macro-pill protein">P:${esc(String(c.protein || 0))}g</span>`
+      + `<span class="macro-pill carbs">C:${esc(String(c.carbs   || 0))}g</span>`
+      + `<span class="macro-pill fat">F:${esc(String(c.fat     || 0))}g</span>`
+      : '';
+    const gramsStr = c.grams ? ` &mdash; ${esc(String(c.grams))}g` : '';
     li.innerHTML = `
       <div>
-        <strong>${c.food}</strong>
-        <span class="meta"> &mdash; ${c.calories} kcal</span>
+        <strong>${esc(c.food)}</strong>${gramsStr}
+        <span class="meta"> &mdash; ${esc(String(c.calories))} kcal</span>
+        ${hasMacros ? `<div class="macro-row">${macroStr}</div>` : ''}
         <div class="meta">${fmtDate(c.date)}</div>
       </div>
-      <button class="del-btn" title="Delete" data-key="calories" data-id="${c.id}">✕</button>`;
+      <button class="del-btn" title="Delete" data-key="calories" data-id="${esc(c.id)}">✕</button>`;
     calList.appendChild(li);
   });
 }
 
 calForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const fd = new FormData(calForm);
+  const fd      = new FormData(calForm);
+  const grams   = fd.get('grams');
+  const cal100  = fd.get('cal_per100');
+  const pro100  = fd.get('protein_per100');
+  const carb100 = fd.get('carbs_per100');
+  const fat100  = fd.get('fat_per100');
+  const m       = computeMacros(grams, cal100, pro100, carb100, fat100);
+
   const entry = {
-    id: uid(),
-    date: fd.get('date') || todayISO(),
-    food: fd.get('food').trim(),
-    calories: fd.get('calories'),
+    id:             uid(),
+    date:           fd.get('date') || todayISO(),
+    food:           fd.get('food').trim(),
+    grams:          grams   ? Number(grams)   : null,
+    cal_per100:     cal100  ? Number(cal100)  : null,
+    protein_per100: pro100  ? Number(pro100)  : null,
+    carbs_per100:   carb100 ? Number(carb100) : null,
+    fat_per100:     fat100  ? Number(fat100)  : null,
+    calories:       m.calories,
+    protein:        m.protein,
+    carbs:          m.carbs,
+    fat:            m.fat,
   };
-  if (!entry.food || !entry.calories) return;
+
+  if (!entry.food || !entry.grams) return;
+
   const all = store.get(KEYS.calories);
   all.push(entry);
   store.set(KEYS.calories, all);
   calForm.reset();
   document.querySelector('#cal-form [name=date]').value = todayISO();
+  document.getElementById('cal-preview').style.display = 'none';
   renderCalories(calFilter.value || null);
 });
 
@@ -244,6 +320,107 @@ goalInput.addEventListener('change', () => {
   }
 });
 
+// ══════════════════════════════════════════════════════════════════════════════
+// BARCODE SCANNER
+// ══════════════════════════════════════════════════════════════════════════════
+const scannerModal  = document.getElementById('scanner-modal');
+const scannerVideo  = document.getElementById('scanner-video');
+const scannerStatus = document.getElementById('scanner-status');
+const scanBtn       = document.getElementById('scan-btn');
+const scannerClose  = document.getElementById('scanner-close');
+
+let scannerControls = null;
+
+function openScanner() {
+  scannerModal.style.display = 'flex';
+  scannerStatus.textContent  = 'Starting camera…';
+
+  if (typeof ZXingBrowser === 'undefined') {
+    scannerStatus.textContent = '⚠ Scanner library not loaded. Check your internet connection.';
+    return;
+  }
+
+  const codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+  codeReader.decodeFromVideoDevice(null, scannerVideo, (result, err, controls) => {
+    scannerControls = controls;
+    if (result) {
+      controls.stop();
+      closeScanner();
+      lookupBarcode(result.getText());
+    } else if (err && err.name !== 'NotFoundException') {
+      scannerStatus.textContent = '⚠ Camera error: ' + err.message;
+    } else {
+      scannerStatus.textContent = 'Point camera at barcode…';
+    }
+  }).catch((err) => {
+    scannerStatus.textContent = '⚠ Camera access denied. Please allow camera permission and try again.';
+    console.error('Scanner error:', err);
+  });
+}
+
+function closeScanner() {
+  if (scannerControls) {
+    scannerControls.stop();
+    scannerControls = null;
+  }
+  scannerModal.style.display = 'none';
+}
+
+async function lookupBarcode(barcode) {
+  scannerStatus.textContent = 'Looking up product…';
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}?fields=product_name,nutriments`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (!res.ok) throw new Error('Network error');
+    const data = await res.json();
+
+    if (data.status === 0 || !data.product) {
+      alert('Product not found in Open Food Facts database. Please enter details manually.');
+      return;
+    }
+
+    const p = data.product;
+    const n = p.nutriments || {};
+
+    if (p.product_name) {
+      document.getElementById('cal-food').value = p.product_name;
+    }
+    document.getElementById('cal-per100').value     = Math.round(n['energy-kcal_100g'] || 0);
+    document.getElementById('protein-per100').value = round1(n['proteins_100g']      || 0);
+    document.getElementById('carbs-per100').value   = round1(n['carbohydrates_100g'] || 0);
+    document.getElementById('fat-per100').value     = round1(n['fat_100g']           || 0);
+
+    // Default serving to 100g if empty
+    if (!document.getElementById('cal-grams').value) {
+      document.getElementById('cal-grams').value = 100;
+    }
+    updateCalPreview();
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      alert('Request timed out. Check your internet connection and try again.');
+    } else {
+      alert('Could not look up barcode. Check your internet connection and try again.');
+    }
+  }
+}
+
+scanBtn.addEventListener('click', openScanner);
+scannerClose.addEventListener('click', closeScanner);
+// Close modal when clicking the dark backdrop
+scannerModal.addEventListener('click', (e) => {
+  if (e.target === scannerModal) closeScanner();
+});
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && scannerModal.style.display !== 'none') closeScanner();
+});
+
 // ── Global delete handler ─────────────────────────────────────────────────────
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.del-btn');
@@ -253,17 +430,15 @@ document.addEventListener('click', (e) => {
   if (!storeKey) return;
   const items = store.get(storeKey).filter((item) => item.id !== id);
   store.set(storeKey, items);
-  if (key === 'lifts') renderLifts(liftFilter.value || null);
-  if (key === 'runs')  renderRuns(runFilter.value || null);
+  if (key === 'lifts')    renderLifts(liftFilter.value || null);
+  if (key === 'runs')     renderRuns(runFilter.value || null);
   if (key === 'calories') renderCalories(calFilter.value || null);
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 (function init() {
   const today = todayISO();
-  // pre-fill date fields
   document.querySelectorAll('input[name=date]').forEach((i) => { i.value = today; });
-  // restore goal
   const savedGoal = localStorage.getItem(KEYS.goal);
   if (savedGoal) goalInput.value = savedGoal;
 

@@ -98,6 +98,13 @@
   <!-- ══ CALORIES ════════════════════════════════════════════ -->
   <section id="calories-panel" class="tab-panel">
 
+    <div class="summary">
+      <div class="tile"><div class="value" id="cal-today-total">0</div><div class="label">kcal today</div></div>
+      <div class="tile"><div class="value protein-color" id="macro-protein">0g</div><div class="label">Protein</div></div>
+      <div class="tile"><div class="value carbs-color" id="macro-carbs">0g</div><div class="label">Carbs</div></div>
+      <div class="tile"><div class="value fat-color" id="macro-fat">0g</div><div class="label">Fat</div></div>
+    </div>
+
     <div class="card">
       <h2>Daily Goal</h2>
       <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
@@ -121,8 +128,34 @@
       <h2>Log Food</h2>
       <form id="cal-form">
         <label>Date <input type="date" name="date" /></label>
-        <label>Food / Meal <input type="text" name="food" placeholder="e.g. Chicken breast" required /></label>
-        <label>Calories (kcal) <input type="number" name="calories" min="0" placeholder="350" required /></label>
+
+        <div class="scan-row">
+          <label style="flex:1">
+            Food / Meal
+            <input type="text" name="food" id="cal-food" placeholder="e.g. Chicken breast" required />
+          </label>
+          <button type="button" id="scan-btn" class="scan-btn" title="Scan barcode">📷 Scan</button>
+        </div>
+
+        <label>
+          Serving (g)
+          <input type="number" name="grams" id="cal-grams" min="0" step="1" placeholder="100" required />
+        </label>
+
+        <div class="per100-header">— Per 100 g —</div>
+
+        <label>Calories <input type="number" name="cal_per100" id="cal-per100" min="0" step="1" placeholder="0" /></label>
+        <label>Protein (g) <input type="number" name="protein_per100" id="protein-per100" min="0" step="0.1" placeholder="0" /></label>
+        <label>Carbs (g) <input type="number" name="carbs_per100" id="carbs-per100" min="0" step="0.1" placeholder="0" /></label>
+        <label>Fat (g) <input type="number" name="fat_per100" id="fat-per100" min="0" step="0.1" placeholder="0" /></label>
+
+        <div id="cal-preview" class="macro-preview" style="display:none">
+          <span id="prev-kcal">0 kcal</span>
+          <span class="macro-pill protein">P: <strong id="prev-protein">0g</strong></span>
+          <span class="macro-pill carbs">C: <strong id="prev-carbs">0g</strong></span>
+          <span class="macro-pill fat">F: <strong id="prev-fat">0g</strong></span>
+        </div>
+
         <button type="submit">Add</button>
       </form>
     </div>
@@ -141,6 +174,21 @@
 
 </main>
 
+<!-- ══ Barcode scanner modal ════════════════════════════════ -->
+<div id="scanner-modal" class="scanner-modal" style="display:none" role="dialog" aria-modal="true" aria-label="Barcode scanner">
+  <div class="scanner-box">
+    <button id="scanner-close" class="scanner-close" aria-label="Close scanner">✕</button>
+    <h3>Scan Food Barcode</h3>
+    <p class="scanner-hint">Point your camera at the barcode on the package</p>
+    <div class="video-wrap">
+      <video id="scanner-video" playsinline muted></video>
+      <div class="scan-line"></div>
+    </div>
+    <p id="scanner-status" class="scanner-status">Starting camera…</p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
